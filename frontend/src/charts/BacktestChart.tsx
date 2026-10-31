@@ -37,7 +37,7 @@ export function BacktestChart({ dates, realized, result }: BacktestChartProps) {
   return (
     <ChartFrame summary={summary} height={340}>
       <ResponsiveContainer>
-        <ComposedChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+        <ComposedChart data={data} margin={{ top: 8, right: 24, bottom: 0, left: 0 }}>
           <CartesianGrid {...gridStyle} />
           <XAxis
             dataKey="date"

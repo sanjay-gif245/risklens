@@ -1,3 +1,5 @@
 {
-  "rewrites": [{ "source": "/((?!assets/|favicon.svg|sample_portfolio.csv).*)", "destination": "/index.html" }]
+  "rewrites": [
+    { "source": "/((?!assets/|favicon.svg|sample_portfolio.csv).*)", "destination": "/index.html" }
+  ]
 }

@@ -23,7 +23,7 @@ export function DrawdownChart({ points, maxDepth, troughDate }: DrawdownChartPro
   return (
     <ChartFrame summary={summary} height={280}>
       <ResponsiveContainer>
-        <AreaChart data={points} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+        <AreaChart data={points} margin={{ top: 8, right: 24, bottom: 0, left: 0 }}>
           <CartesianGrid {...gridStyle} />
           <XAxis
             dataKey="date"
