@@ -67,6 +67,21 @@ def custom_shocks(values: pd.Series, shocks: Mapping[str, float]) -> ScenarioRes
     return _summarise(values, shock, pd.Series(True, index=values.index))
 
 
+def replay_path(values: pd.Series, prices: pd.DataFrame, covered: pd.Series) -> pd.Series:
+    """Change in value of the covered holdings through the event window.
+
+    Starts at 0.0 (nothing lost yet) and ends at the replay's pnl_pct. A holding
+    whose first price comes a few days after the window start is held flat until
+    it appears, matching how historical_replay measures its return.
+    """
+    tickers = list(covered[covered].index)
+    window = prices[tickers].ffill()
+    first_prices = window.apply(lambda series: series.dropna().iloc[0])
+    relative = (window / first_prices).fillna(1.0)
+    held_value = (relative * values[tickers]).sum(axis=1)
+    return pd.Series(held_value / values[tickers].sum() - 1.0, index=held_value.index)
+
+
 def historical_replay(
     values: pd.Series, prices: pd.DataFrame, start: pd.Timestamp, end: pd.Timestamp
 ) -> ScenarioResult:

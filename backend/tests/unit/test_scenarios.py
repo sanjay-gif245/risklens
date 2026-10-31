@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from app.core.scenarios import custom_shocks, historical_replay, market_shock
+from app.core.scenarios import custom_shocks, historical_replay, market_shock, replay_path
 
 
 def test_market_shock_uses_each_holdings_beta() -> None:
@@ -56,6 +56,24 @@ def test_historical_replay_covers_only_holdings_that_existed() -> None:
     assert result.covered_value == pytest.approx(8000.0)
     assert result.pnl == pytest.approx(8000.0 * (70.0 / 100.0 - 1.0))
     assert result.pnl_pct == pytest.approx(-0.30)
+
+
+def test_replay_path_starts_flat_and_ends_at_the_replay_result() -> None:
+    dates = pd.bdate_range("2020-02-19", periods=6)
+    prices = pd.DataFrame(
+        {
+            "A": [100.0, 95.0, 90.0, 80.0, 85.0, 90.0],
+            "B": [np.nan, 50.0, 55.0, 60.0, 45.0, 40.0],  # first price one day late
+        },
+        index=dates,
+    )
+    values = pd.Series({"A": 6000.0, "B": 4000.0})
+    result = historical_replay(values, prices, dates[0], dates[-1])
+    path = replay_path(values, prices, result.breakdown["covered"])
+
+    assert path.iloc[0] == pytest.approx(0.0)
+    assert path.iloc[3] == pytest.approx((6000 * 0.8 + 4000 * 1.2) / 10000 - 1)
+    assert path.iloc[-1] == pytest.approx(result.pnl_pct)
 
 
 def test_historical_replay_ignores_missing_columns() -> None:
