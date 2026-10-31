@@ -3,15 +3,21 @@
 from collections.abc import Callable, Iterator
 from datetime import date
 from pathlib import Path
+from typing import Annotated
 
 import numpy as np
 import pandas as pd
 import pytest
+from fastapi import Depends
+from fastapi.testclient import TestClient
 from sqlalchemy import Engine, StaticPool, create_engine
 from sqlalchemy.orm import Session
 
+from app.api.deps import get_data_service
 from app.db.models import Base
+from app.db.session import get_session
 from app.errors import ProviderUnavailable
+from app.main import create_app
 from app.services.data_service import DataService
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -102,3 +108,33 @@ def session(engine: Engine) -> Iterator[Session]:
 @pytest.fixture
 def data_service(session: Session, provider: FakePriceProvider) -> DataService:
     return DataService(session, provider, today=lambda: FIXTURE_LAST_DAY)
+
+
+@pytest.fixture
+def make_client(engine: Engine) -> Callable[[FakePriceProvider], TestClient]:
+    """Build an API client wired to the in-memory database and the given fake provider."""
+
+    def build(price_provider: FakePriceProvider) -> TestClient:
+        app = create_app()
+
+        def session_override() -> Iterator[Session]:
+            with Session(engine) as db_session:
+                yield db_session
+
+        def data_service_override(
+            db_session: Annotated[Session, Depends(get_session)],
+        ) -> DataService:
+            return DataService(db_session, price_provider, today=lambda: FIXTURE_LAST_DAY)
+
+        app.dependency_overrides[get_session] = session_override
+        app.dependency_overrides[get_data_service] = data_service_override
+        return TestClient(app)
+
+    return build
+
+
+@pytest.fixture
+def client(
+    make_client: Callable[[FakePriceProvider], TestClient], provider: FakePriceProvider
+) -> TestClient:
+    return make_client(provider)
