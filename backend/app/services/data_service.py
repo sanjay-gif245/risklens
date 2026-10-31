@@ -61,11 +61,17 @@ class DataService:
         self.stats = CacheStats()
 
     def get_prices(
-        self, tickers: Iterable[str], start: date, end: date | None = None
+        self,
+        tickers: Iterable[str],
+        start: date,
+        end: date | None = None,
+        strict: bool = True,
     ) -> dict[str, pd.Series]:
         """Adjusted close series per ticker, fetching only what is not cached.
 
-        Raises UnknownTickers listing every ticker that has no data at all.
+        With strict=True, raises UnknownTickers listing every ticker that has no
+        data at all. With strict=False those tickers are simply left out, which
+        is what a historical replay needs for stocks that did not exist yet.
         """
         end = end or self.today()
         before = CacheStats(self.stats.hits, self.stats.misses, self.stats.rows_fetched)
@@ -86,7 +92,7 @@ class DataService:
                 "rows_fetched": self.stats.rows_fetched - before.rows_fetched,
             },
         )
-        if unknown:
+        if unknown and strict:
             raise UnknownTickers(unknown)
         return prices
 

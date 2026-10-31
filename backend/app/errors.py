@@ -37,6 +37,18 @@ class UnknownTickers(AppError):
         )
 
 
+class InvalidRequest(AppError):
+    """The request is well-formed but asks for something that cannot be computed."""
+
+    status_code = 422
+    code = "invalid_request"
+
+
+class FileTooLarge(AppError):
+    status_code = 413
+    code = "file_too_large"
+
+
 class InsufficientData(AppError):
     status_code = 422
     code = "insufficient_data"
@@ -53,3 +65,8 @@ class PortfolioNotFound(AppError):
 class ProviderUnavailable(AppError):
     status_code = 502
     code = "price_provider_unavailable"
+
+
+class DatabaseUnavailable(AppError):
+    status_code = 503
+    code = "database_unavailable"

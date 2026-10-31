@@ -18,6 +18,7 @@ from app.core.returns import (
 )
 from app.db.models import Holding, Portfolio
 from app.errors import InsufficientData, InvalidPortfolioFile, PortfolioNotFound
+from app.schemas.portfolio import HoldingOut, PortfolioDetail, PortfolioSummary
 from app.services.csv_import import ParsedHoldings
 from app.services.data_service import DataService
 from app.services.markets import default_benchmark, single_currency
@@ -62,6 +63,69 @@ def create_portfolio(
     session.add(portfolio)
     session.commit()
     return portfolio
+
+
+def short_history_warning(ticker: str, days: int) -> str:
+    return (
+        f"{ticker} excluded: only {days} trading days of price history "
+        f"(at least {MIN_HISTORY_DAYS} are needed)."
+    )
+
+
+def summarise(portfolio: Portfolio) -> PortfolioSummary:
+    return PortfolioSummary(
+        id=portfolio.id,
+        name=portfolio.name,
+        base_currency=portfolio.base_currency,
+        benchmark=portfolio.benchmark,
+        created_at=portfolio.created_at,
+        holding_count=len(portfolio.holdings),
+    )
+
+
+def describe_portfolio(
+    portfolio: Portfolio, data: DataService, notices: list[str] | None = None
+) -> PortfolioDetail:
+    """Holdings valued at their latest cached price, including ones too short to analyse."""
+    series = data.get_prices(
+        [holding.ticker for holding in portfolio.holdings], history_start(data.today())
+    )
+    last_prices = {ticker: float(prices.iloc[-1]) for ticker, prices in series.items()}
+    total_value = sum(h.quantity * last_prices[h.ticker] for h in portfolio.holdings)
+    total_cost = sum(h.quantity * h.buy_price for h in portfolio.holdings)
+
+    rows: list[HoldingOut] = []
+    warnings: list[str] = []
+    for holding in portfolio.holdings:
+        days = int(series[holding.ticker].shape[0])
+        value = holding.quantity * last_prices[holding.ticker]
+        cost = holding.quantity * holding.buy_price
+        if days < MIN_HISTORY_DAYS:
+            warnings.append(short_history_warning(holding.ticker, days))
+        rows.append(
+            HoldingOut(
+                ticker=holding.ticker,
+                quantity=holding.quantity,
+                buy_price=holding.buy_price,
+                last_price=last_prices[holding.ticker],
+                market_value=value,
+                cost_value=cost,
+                unrealized_pnl=value - cost,
+                weight=value / total_value,
+                history_days=days,
+                analysed=days >= MIN_HISTORY_DAYS,
+            )
+        )
+    return PortfolioDetail(
+        **summarise(portfolio).model_dump(),
+        as_of=max(prices.index[-1] for prices in series.values()).date(),
+        total_value=total_value,
+        total_cost=total_cost,
+        unrealized_pnl=total_value - total_cost,
+        holdings=rows,
+        warnings=warnings,
+        notices=notices or [],
+    )
 
 
 def list_portfolios(session: Session) -> list[Portfolio]:
@@ -117,11 +181,7 @@ def load_market_data(portfolio: Portfolio, data: DataService) -> MarketData:
         )
 
     usable, too_short = split_by_history({ticker: series[ticker] for ticker in tickers})
-    warnings = [
-        f"{ticker} excluded: only {days} trading days of price history "
-        f"(at least {MIN_HISTORY_DAYS} are needed)."
-        for ticker, days in too_short.items()
-    ]
+    warnings = [short_history_warning(ticker, days) for ticker, days in too_short.items()]
     if not usable:
         raise InsufficientData(
             f"No holding has {MIN_HISTORY_DAYS} trading days of price history, so risk "
