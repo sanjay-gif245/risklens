@@ -1,0 +1,33 @@
+# Local development. `docker compose up -d db` is enough if you run the API from source;
+# `docker compose up --build` also runs the API in a container on :8000.
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: risklens
+      POSTGRES_PASSWORD: risklens
+      POSTGRES_DB: risklens
+    ports:
+      - "5432:5432"
+    volumes:
+      - risklens-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U risklens"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql://risklens:risklens@db:5432/risklens
+      CORS_ORIGINS: http://localhost:5173
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  risklens-data:

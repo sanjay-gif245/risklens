@@ -16,13 +16,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
 
+from sqlalchemy import delete, func, select
+from sqlalchemy.orm import Session
+
 from app.db.models import Price
 from app.db.session import get_engine
 from app.services.data_service import DataService
 from app.services.portfolio_service import history_start
 from app.services.price_provider import YFinanceProvider
-from sqlalchemy import delete, func, select
-from sqlalchemy.orm import Session
 
 TICKERS = ["AAPL", "MSFT", "JPM", "XOM", "JNJ", "NVDA", "KO", "TSLA", "^GSPC"]
 WARM_RUNS = 30

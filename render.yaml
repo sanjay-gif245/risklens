@@ -1,0 +1,23 @@
+# Render Blueprint: one web service built from the backend Dockerfile, plus a managed PostgreSQL.
+# The container runs `alembic upgrade head` before it starts serving, so a deploy migrates the schema.
+
+databases:
+  - name: risklens-db
+    databaseName: risklens
+    user: risklens
+
+services:
+  - type: web
+    name: risklens-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: risklens-db
+          property: connectionString
+      # Set in the Render dashboard to the exact Vercel origin, for example https://risklens.vercel.app
+      - key: CORS_ORIGINS
+        sync: false
