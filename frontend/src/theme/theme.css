@@ -1,0 +1,171 @@
+/* Design tokens and base typography. Every colour in the product comes from this file. */
+
+:root {
+  color-scheme: dark;
+
+  /* Ground and surfaces: ink green, lifted slightly for panels, divided by hairlines */
+  --ink: #0b0f0e;
+  --surface: #111815;
+  --surface-raised: #161f1b;
+  --hairline: #26322d;
+  --hairline-strong: #3a4842;
+
+  /* Text: warm bone, muted stone */
+  --bone: #ede6d6;
+  --stone: #a39e91;
+  --stone-dim: #8a8579;
+
+  /* Accent: champagne gold, used sparingly */
+  --gold: #c9a961;
+  --gold-deep: #b8975a;
+
+  /* Outcomes: muted sage for gains, garnet and oxblood for losses */
+  --sage: #8fa68a;
+  --sage-deep: #5d7659;
+  --garnet: #c4646e;
+  --oxblood: #7d2b34;
+
+  --font-serif: 'Cormorant Garamond', 'Iowan Old Style', Georgia, serif;
+  --font-sans: 'Manrope', system-ui, -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 72px;
+
+  --radius: 2px;
+  --page-width: 1180px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--ink);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--ink);
+  color: var(--bone);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: 0.005em;
+}
+
+h1 {
+  font-size: clamp(34px, 5vw, 52px);
+}
+
+h2 {
+  font-size: 28px;
+}
+
+h3 {
+  font-size: 21px;
+}
+
+p {
+  margin: 0 0 var(--space-4);
+}
+
+a {
+  color: var(--gold);
+  text-decoration-color: rgb(201 169 97 / 40%);
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  text-decoration-color: var(--gold);
+}
+
+::selection {
+  background: rgb(201 169 97 / 30%);
+}
+
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+
+/* Small uppercase captions */
+.label {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--stone);
+}
+
+/* Anything numeric that should line up in columns */
+.mono,
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.muted {
+  color: var(--stone);
+}
+
+.positive {
+  color: var(--sage);
+}
+
+.negative {
+  color: var(--garnet);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+input,
+select {
+  font: inherit;
+  color: var(--bone);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
